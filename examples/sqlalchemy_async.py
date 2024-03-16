@@ -3,9 +3,10 @@ from __future__ import annotations
 import asyncio
 import os
 
+from azure.identity import DefaultAzureCredential
 from dotenv import load_dotenv
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -57,17 +58,21 @@ async def select_and_update_objects(
 
 
 async def async_main() -> None:
-
+    # Azure hosted, refresh token that becomes password.
+    azure_credential = DefaultAzureCredential()
+    # Get token for Azure Database for PostgreSQL
+    print("Get password token.")
+    token = azure_credential.get_token("https://ossrdbms-aad.database.windows.net/.default")
     # Connect to the database based on environment variables
     load_dotenv(".env", override=True)
     DBUSER = os.environ["DBUSER"]
-    DBPASS = os.environ["DBPASS"]
+    DBPASS = token.token
     DBHOST = os.environ["DBHOST"]
     DBNAME = os.environ["DBNAME"]
     DATABASE_URI = f"postgresql+asyncpg://{DBUSER}:{DBPASS}@{DBHOST}/{DBNAME}"
     # Use SSL if not connecting to localhost
     if DBHOST != "localhost":
-        DATABASE_URI += "?sslmode=require"
+        DATABASE_URI += "?ssl=require"
 
     engine = create_async_engine(
         DATABASE_URI,
@@ -79,6 +84,8 @@ async def async_main() -> None:
     async_session = async_sessionmaker(engine, expire_on_commit=False)
 
     async with engine.begin() as conn:
+        # run sql create extension vector
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
