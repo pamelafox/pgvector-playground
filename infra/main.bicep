@@ -49,7 +49,6 @@ module pg 'pg.bicep' = {
     location: location
     tags: tags
     administratorLogin: administratorLogin
-    administratorLoginPassword: administratorLoginPassword
     aadAdminObjectid: aadAdminObjectid
     aadAdminName: aadAdminName
     aadAdminType: aadAdminType

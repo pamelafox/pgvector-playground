@@ -10,7 +10,6 @@ load_dotenv(".env", override=True)
 POSTGRES_HOST = os.environ["POSTGRES_HOST"]
 POSTGRES_USERNAME = os.environ["POSTGRES_USERNAME"]
 POSTGRES_DATABASE = os.environ["POSTGRES_DATABASE"]
-POSTGRES_SSL = os.environ.get("POSTGRES_SSL", "require")
 
 if POSTGRES_HOST.endswith(".database.azure.com"):
     print("Authenticating to Azure Database for PostgreSQL using Azure Identity...")
@@ -20,12 +19,16 @@ if POSTGRES_HOST.endswith(".database.azure.com"):
 else:
     POSTGRES_PASSWORD = os.environ["POSTGRES_PASSWORD"]
 
+extra_params = {}
+if POSTGRES_SSL := os.environ.get("POSTGRES_SSL"):
+    extra_params["sslmode"] = POSTGRES_SSL
+
 conn = psycopg2.connect(
     database=POSTGRES_DATABASE,
     user=POSTGRES_USERNAME,
     password=POSTGRES_PASSWORD,
     host=POSTGRES_HOST,
-    sslmode=POSTGRES_SSL,
+    **extra_params,
 )
 
 conn.autocommit = True

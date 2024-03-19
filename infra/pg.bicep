@@ -5,8 +5,6 @@ param tags object = {}
 
 @secure()
 param administratorLogin string
-@secure()
-param administratorLoginPassword string
 
 @description('The Object ID of the Azure AD admin.')
 param aadAdminObjectid string
@@ -37,7 +35,6 @@ resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-03-01-pr
   }
   properties: {
     administratorLogin: administratorLogin
-    administratorLoginPassword: administratorLoginPassword
     authConfig: {
       activeDirectoryAuth: 'Enabled'
       passwordAuth: 'Disabled'
