@@ -46,5 +46,5 @@ jobs:
           env:
             POSTGRES_HOST: localhost
             POSTGRES_USERNAME: postgres
-            DBPASS: postgres
+            POSTGRES_PASSWORD: postgres
             POSTGRES_DATABASE: postgres
