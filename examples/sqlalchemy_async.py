@@ -58,21 +58,24 @@ async def select_and_update_objects(
 
 
 async def async_main() -> None:
-    # Azure hosted, refresh token that becomes password.
-    azure_credential = DefaultAzureCredential()
-    # Get token for Azure Database for PostgreSQL
-    print("Get password token.")
-    token = azure_credential.get_token("https://ossrdbms-aad.database.windows.net/.default")
-    # Connect to the database based on environment variables
     load_dotenv(".env", override=True)
-    DBUSER = os.environ["DBUSER"]
-    DBPASS = token.token
-    DBHOST = os.environ["DBHOST"]
-    DBNAME = os.environ["DBNAME"]
-    DATABASE_URI = f"postgresql+asyncpg://{DBUSER}:{DBPASS}@{DBHOST}/{DBNAME}"
-    # Use SSL if not connecting to localhost
-    if DBHOST != "localhost":
-        DATABASE_URI += "?ssl=require"
+
+    POSTGRES_HOST = os.environ["POSTGRES_HOST"]
+    POSTGRES_USERNAME = os.environ["POSTGRES_USERNAME"]
+    POSTGRES_DATABASE = os.environ["POSTGRES_DATABASE"]
+
+    if POSTGRES_HOST.endswith(".database.azure.com"):
+        print("Authenticating to Azure Database for PostgreSQL using Azure Identity...")
+        azure_credential = DefaultAzureCredential()
+        token = azure_credential.get_token("https://ossrdbms-aad.database.windows.net/.default")
+        POSTGRES_PASSWORD = token.token
+    else:
+        POSTGRES_PASSWORD = os.environ["POSTGRES_PASSWORD"]
+
+    DATABASE_URI = f"postgresql+asyncpg://{POSTGRES_USERNAME}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}/{POSTGRES_DATABASE}"
+    # Specify SSL mode if needed
+    if POSTGRES_SSL := os.environ.get("POSTGRES_SSL"):
+        DATABASE_URI += f"?ssl={POSTGRES_SSL}"
 
     engine = create_async_engine(
         DATABASE_URI,

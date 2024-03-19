@@ -2,20 +2,32 @@ import os
 
 import numpy as np
 import psycopg2
+from azure.identity import DefaultAzureCredential
 from dotenv import load_dotenv
 from pgvector.psycopg2 import register_vector
 
 load_dotenv(".env", override=True)
-DBUSER = os.environ["DBUSER"]
-DBPASS = os.environ["DBPASS"]
-DBHOST = os.environ["DBHOST"]
-DBNAME = os.environ["DBNAME"]
-# Use SSL if not connecting to localhost
-DBSSL = "disable"
-if DBHOST != "localhost":
-    DBSSL = "require"
+POSTGRES_HOST = os.environ["POSTGRES_HOST"]
+POSTGRES_USERNAME = os.environ["POSTGRES_USERNAME"]
+POSTGRES_DATABASE = os.environ["POSTGRES_DATABASE"]
+POSTGRES_SSL = os.environ.get("POSTGRES_SSL", "require")
 
-conn = psycopg2.connect(database=DBNAME, user=DBUSER, password=DBPASS, host=DBHOST, sslmode=DBSSL)
+if POSTGRES_HOST.endswith(".database.azure.com"):
+    print("Authenticating to Azure Database for PostgreSQL using Azure Identity...")
+    azure_credential = DefaultAzureCredential()
+    token = azure_credential.get_token("https://ossrdbms-aad.database.windows.net/.default")
+    POSTGRES_PASSWORD = token.token
+else:
+    POSTGRES_PASSWORD = os.environ["POSTGRES_PASSWORD"]
+
+conn = psycopg2.connect(
+    database=POSTGRES_DATABASE,
+    user=POSTGRES_USERNAME,
+    password=POSTGRES_PASSWORD,
+    host=POSTGRES_HOST,
+    sslmode=POSTGRES_SSL,
+)
+
 conn.autocommit = True
 cur = conn.cursor()
 cur.execute("CREATE EXTENSION IF NOT EXISTS vector")
@@ -41,7 +53,10 @@ for item in closest_items:
     print(item[1])
 
 # Calculate distance between [3, 1, 2] and the first vector
-cur.execute("SELECT embedding <-> %s AS distance FROM items ORDER BY embedding <-> %s LIMIT 1", (query_embedding, query_embedding))
+cur.execute(
+    "SELECT embedding <-> %s AS distance FROM items ORDER BY embedding <-> %s LIMIT 1",
+    (query_embedding, query_embedding),
+)
 distance = cur.fetchone()
 print(distance[0])
 

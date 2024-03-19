@@ -29,7 +29,12 @@ param aadAdminName string
   'ServicePrincipal'
 ])
 param aadAdminType string = 'User'
+param databaseName string = 'db'
 
+var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
+
+var tags = { 'azd-env-name': environmentName }
+var prefix = '${environmentName}-${resourceToken}'
 
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: !empty(resourceGroupName) ? resourceGroupName : 'rg-${environmentName}'
@@ -40,14 +45,20 @@ module pg 'pg.bicep' = {
   name: 'pg'
   scope: resourceGroup
   params: {
-    name: 'pgvectserver'
+    name: '${prefix}-postgresql'
     location: location
+    tags: tags
     administratorLogin: administratorLogin
     administratorLoginPassword: administratorLoginPassword
     aadAdminObjectid: aadAdminObjectid
     aadAdminName: aadAdminName
     aadAdminType: aadAdminType
-    databaseNames: ['db']
+    databaseNames: [ databaseName ]
     allowAllIPsFirewall: true
   }
 }
+
+output POSTGRES_USERNAME string = aadAdminName
+output POSTGRES_DATABASE string = databaseName
+output POSTGRES_HOST string = pg.outputs.POSTGRES_DOMAIN_NAME
+output POSTGRES_SSL string = 'require'

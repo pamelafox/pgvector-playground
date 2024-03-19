@@ -2,23 +2,31 @@ import asyncio
 import os
 
 import asyncpg
+from azure.identity import DefaultAzureCredential
 from dotenv import load_dotenv
 from pgvector.asyncpg import register_vector
 
 
-async def main():
+async def async_main():
     # Establish a connection to an existing database
     load_dotenv(".env", override=True)
-    DBUSER = os.environ["DBUSER"]
-    DBPASS = os.environ["DBPASS"]
-    DBHOST = os.environ["DBHOST"]
-    DBNAME = os.environ["DBNAME"]
+    POSTGRES_HOST = os.environ["POSTGRES_HOST"]
+    POSTGRES_USERNAME = os.environ["POSTGRES_USERNAME"]
+    POSTGRES_DATABASE = os.environ["POSTGRES_DATABASE"]
 
-    DATABASE_URI = f"postgresql://{DBUSER}:{DBPASS}@{DBHOST}/{DBNAME}"
+    if POSTGRES_HOST.endswith(".database.azure.com"):
+        print("Authenticating to Azure Database for PostgreSQL using Azure Identity...")
+        azure_credential = DefaultAzureCredential()
+        token = azure_credential.get_token("https://ossrdbms-aad.database.windows.net/.default")
+        POSTGRES_PASSWORD = token.token
+    else:
+        POSTGRES_PASSWORD = os.environ["POSTGRES_PASSWORD"]
 
-    # Use SSL if not connecting to localhost
-    if DBHOST != "localhost":
-        DATABASE_URI += "?sslmode=require"
+    DATABASE_URI = f"postgresql://{POSTGRES_USERNAME}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}/{POSTGRES_DATABASE}"
+    # Specify SSL mode if needed
+    if POSTGRES_SSL := os.environ.get("POSTGRES_SSL"):
+        DATABASE_URI += f"?ssl={POSTGRES_SSL}"
+
     conn = await asyncpg.connect(DATABASE_URI)
 
     await conn.execute("CREATE EXTENSION IF NOT EXISTS vector")
@@ -56,4 +64,4 @@ async def main():
     await conn.close()
 
 
-asyncio.get_event_loop().run_until_complete(main())
+asyncio.run(async_main())

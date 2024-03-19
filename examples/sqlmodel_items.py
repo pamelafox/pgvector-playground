@@ -1,5 +1,6 @@
 import os
 
+from azure.identity import DefaultAzureCredential
 from dotenv import load_dotenv
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import Column
@@ -13,16 +14,23 @@ class Item(SQLModel, table=True):
 
 # Connect to the database
 load_dotenv(".env", override=True)
-DBUSER = os.environ["DBUSER"]
-DBPASS = os.environ["DBPASS"]
-DBHOST = os.environ["DBHOST"]
-DBNAME = os.environ["DBNAME"]
+POSTGRES_HOST = os.environ["POSTGRES_HOST"]
+POSTGRES_USERNAME = os.environ["POSTGRES_USERNAME"]
+POSTGRES_DATABASE = os.environ["POSTGRES_DATABASE"]
 
-DATABASE_URI = f"postgresql://{DBUSER}:{DBPASS}@{DBHOST}/{DBNAME}"
+if POSTGRES_HOST.endswith(".database.azure.com"):
+    print("Authenticating to Azure Database for PostgreSQL using Azure Identity...")
+    azure_credential = DefaultAzureCredential()
+    token = azure_credential.get_token("https://ossrdbms-aad.database.windows.net/.default")
+    POSTGRES_PASSWORD = token.token
+else:
+    POSTGRES_PASSWORD = os.environ["POSTGRES_PASSWORD"]
 
-# Use SSL if not connecting to localhost
-if DBHOST != "localhost":
-    DATABASE_URI += "?sslmode=require"
+DATABASE_URI = f"postgresql://{POSTGRES_USERNAME}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}/{POSTGRES_DATABASE}"
+# Specify SSL mode if needed
+if POSTGRES_SSL := os.environ.get("POSTGRES_SSL"):
+    DATABASE_URI += f"?sslmode={POSTGRES_SSL}"
+
 engine = create_engine(DATABASE_URI, echo=False)
 
 SQLModel.metadata.drop_all(engine)

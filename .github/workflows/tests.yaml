@@ -44,7 +44,7 @@ jobs:
             python3 examples/sqlalchemy_movies.py
             python3 examples/sqlmodel_items.py
           env:
-            DBHOST: localhost
-            DBUSER: postgres
+            POSTGRES_HOST: localhost
+            POSTGRES_USERNAME: postgres
             DBPASS: postgres
-            DBNAME: postgres
+            POSTGRES_DATABASE: postgres
