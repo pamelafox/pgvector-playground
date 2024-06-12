@@ -8,7 +8,7 @@ from pgvector.asyncpg import register_vector
 
 async def main():
     # Establish a connection to an existing database
-    load_dotenv(".env", override=True)
+    load_dotenv(override=True)
     DBUSER = os.environ["DBUSER"]
     DBPASS = os.environ["DBPASS"]
     DBHOST = os.environ["DBHOST"]

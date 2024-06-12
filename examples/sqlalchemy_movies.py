@@ -21,7 +21,7 @@ class Movie(Base):
 
 
 # Connect to the database based on environment variables
-load_dotenv(".env", override=True)
+load_dotenv(override=True)
 DBUSER = os.environ["DBUSER"]
 DBPASS = os.environ["DBPASS"]
 DBHOST = os.environ["DBHOST"]

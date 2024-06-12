@@ -12,7 +12,7 @@ class Item(SQLModel, table=True):
 
 
 # Connect to the database
-load_dotenv(".env", override=True)
+load_dotenv(override=True)
 DBUSER = os.environ["DBUSER"]
 DBPASS = os.environ["DBPASS"]
 DBHOST = os.environ["DBHOST"]

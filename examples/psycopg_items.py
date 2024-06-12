@@ -5,7 +5,7 @@ import psycopg2
 from dotenv import load_dotenv
 from pgvector.psycopg2 import register_vector
 
-load_dotenv(".env", override=True)
+load_dotenv(override=True)
 DBUSER = os.environ["DBUSER"]
 DBPASS = os.environ["DBPASS"]
 DBHOST = os.environ["DBHOST"]
