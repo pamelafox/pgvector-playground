@@ -2,7 +2,7 @@ import os
 
 from dotenv import load_dotenv
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import Column
+from sqlalchemy import Column, text
 from sqlmodel import Field, Session, SQLModel, create_engine, func, select
 
 
@@ -24,6 +24,10 @@ DATABASE_URI = f"postgresql://{DBUSER}:{DBPASS}@{DBHOST}/{DBNAME}"
 if DBHOST != "localhost":
     DATABASE_URI += "?sslmode=require"
 engine = create_engine(DATABASE_URI, echo=False)
+
+# run some SQL to create extension
+with engine.connect() as conn:
+    conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
 
 SQLModel.metadata.drop_all(engine)
 SQLModel.metadata.create_all(engine)
