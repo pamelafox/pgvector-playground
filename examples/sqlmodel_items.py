@@ -28,6 +28,7 @@ engine = create_engine(DATABASE_URI, echo=False)
 # run some SQL to create extension
 with engine.connect() as conn:
     conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+    conn.commit()
 
 SQLModel.metadata.drop_all(engine)
 SQLModel.metadata.create_all(engine)
