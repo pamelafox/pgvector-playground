@@ -23,6 +23,7 @@ cur.execute("DROP TABLE IF EXISTS items")
 cur.execute("CREATE TABLE items (id bigserial PRIMARY KEY, embedding vector(3));")
 register_vector(conn)
 
+# Hierarchical Navegable Small Worlds - HNSW
 cur.execute("CREATE INDEX ON items USING hnsw (embedding vector_l2_ops)")
 
 embeddings = [
